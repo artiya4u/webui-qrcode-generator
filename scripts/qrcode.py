@@ -2,7 +2,7 @@ import modules.scripts as scripts
 import gradio as gr
 import io
 import os
-
+import requests
 from modules import script_callbacks, generation_parameters_copypaste, extensions
 from modules.shared import opts
 from scripts import constants
@@ -30,6 +30,13 @@ def generate(selected_tab, keys, *values):
         data = f'geo:{"{0:.8f}".format(args["geo_latitude"]).rstrip("0").rstrip(".")},{"{0:.8f}".format(args["geo_longitude"]).rstrip("0").rstrip(".")}'
     else:
         data = args["text"]
+        if data is not None and len(data) > 20 and (data.startswith("http://") or data.startswith("https://")):
+            # shorten long URL using super short code e.g. http://exc.cx/code for more info -> https://github.com/artiya4u/exc
+            base_url = 'https://exc.cx/shorten'
+            response = requests.request("POST", base_url, headers={'Content-Type': 'application/json'}, json={'url': data})
+            if response.status_code == 200:
+                short_url = response.json()["short_url"]
+                data = short_url.replace("https://", "http://", 1)  # shorter URL by 1 character
 
     qrcode = segno.make(data, micro=False, error=args["setting_error_correction"], boost_error=False)
     out = io.BytesIO()
@@ -98,8 +105,8 @@ def on_ui_tabs():
                         inputs["geo_longitude"] = gr.Number(0, label="Longitude", elem_id="qrcode_geo_longitude")
 
                 with gr.Accordion("Settings", open=False):
-                    inputs["setting_scale"] = gr.Slider(label="Scale", minimum=1, maximum=50, value=10, step=1)
-                    inputs["setting_border"] = gr.Slider(label="Border", minimum=0, maximum=10, value=4, step=1)
+                    inputs["setting_scale"] = gr.Slider(label="Scale", minimum=1, maximum=50, value=20, step=1)
+                    inputs["setting_border"] = gr.Slider(label="Border", minimum=0, maximum=10, value=1, step=1)
                     with gr.Row():
                         inputs["setting_dark"] = gr.ColorPicker("#000000", label="Module Color")
                         inputs["setting_light"] = gr.ColorPicker("#ffffff", label="Background Color")
