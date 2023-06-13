@@ -30,7 +30,7 @@ def generate(selected_tab, keys, *values):
         data = f'geo:{"{0:.8f}".format(args["geo_latitude"]).rstrip("0").rstrip(".")},{"{0:.8f}".format(args["geo_longitude"]).rstrip("0").rstrip(".")}'
     else:
         data = args["text"]
-        if data is not None and len(data) > 20 and (data.startswith("http://") or data.startswith("https://")):
+        if args["text_shortener"] and data is not None and len(data) > 20 and (data.startswith("http://") or data.startswith("https://")):
             # shorten long URL using super short code e.g. http://exc.cx/code for more info -> https://github.com/artiya4u/exc
             base_url = 'https://exc.cx/shorten'
             response = requests.request("POST", base_url, headers={'Content-Type': 'application/json'}, json={'url': data})
@@ -50,6 +50,7 @@ def on_ui_tabs():
             with gr.Column():
                 with gr.Tab("Text") as tab_text:
                     inputs["text"] = gr.Textbox(show_label=False, lines=3, placeholder="Plain text / URL / Custom format")
+                    inputs["text_shortener"] = gr.Checkbox(True, label="Use url shortener")
 
                 with gr.Tab("WiFi") as tab_wifi:
                     inputs["wifi_ssid"] = gr.Text(label="SSID")
